@@ -51,6 +51,29 @@ function renderMeasure(m, tab, stringNames) {
     wrap.appendChild(label);
   }
 
+  const chords = tab.measures[m].chords || {};
+  if (Object.keys(chords).length > 0) {
+    const chordRow = document.createElement('div');
+    chordRow.className = 'chord-row';
+    chordRow.style.width = `${w}px`;
+    const beatWidth = cellW * tab.subdivision;
+    const numBeats = tab.timeSignature.num;
+    for (let b = 0; b < numBeats; b++) {
+      if (!chords[b]) continue;
+      const span = document.createElement('span');
+      span.className = 'chord-text';
+      span.style.left = `${PAD_LEFT + b * beatWidth}px`;
+      span.textContent = chords[b];
+      chordRow.appendChild(span);
+    }
+    wrap.appendChild(chordRow);
+  } else {
+    // keep height consistent with editor so layout matches
+    const spacer = document.createElement('div');
+    spacer.className = 'chord-row chord-row-empty';
+    wrap.appendChild(spacer);
+  }
+
   const svgNS = 'http://www.w3.org/2000/svg';
   const svg = document.createElementNS(svgNS, 'svg');
   svg.setAttribute('width', String(w));

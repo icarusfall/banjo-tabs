@@ -380,6 +380,31 @@ function renderMeasure(m, tab, ticks, cellW, w, h, stringNames) {
   label.appendChild(labelInput);
   wrap.appendChild(label);
 
+  // Chord row — one editable slot per beat
+  const chordRow = document.createElement('div');
+  chordRow.className = 'chord-row';
+  chordRow.style.width = `${w}px`;
+  const beatWidth = cellW * tab.subdivision;
+  const numBeats = tab.timeSignature.num;
+  if (!tab.measures[m].chords) tab.measures[m].chords = {};
+  for (let b = 0; b < numBeats; b++) {
+    const input = document.createElement('input');
+    input.type = 'text';
+    input.className = 'chord-input';
+    input.value = tab.measures[m].chords[b] || '';
+    input.placeholder = b === 0 ? 'chord' : '';
+    input.style.left = `${PAD_LEFT + b * beatWidth}px`;
+    input.style.width = `${beatWidth - 2}px`;
+    input.addEventListener('input', () => {
+      const v = input.value.trim();
+      if (v) tab.measures[m].chords[b] = v;
+      else delete tab.measures[m].chords[b];
+      markDirty();
+    });
+    chordRow.appendChild(input);
+  }
+  wrap.appendChild(chordRow);
+
   const ctrls = document.createElement('div');
   ctrls.className = 'measure-controls';
   const addBtn = document.createElement('button');

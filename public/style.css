@@ -493,7 +493,7 @@ button {
 }
 
 /* Staff */
-.staff-area { display: flex; flex-direction: column; gap: 4px; }
+.staff-area { display: flex; flex-direction: column; gap: 24px; }
 
 .measure-row {
   display: flex;
@@ -572,6 +572,45 @@ button {
   padding: 0;
 }
 .measure-controls button:hover { color: var(--accent); }
+
+.chord-row {
+  position: relative;
+  height: 20px;
+  margin-bottom: 2px;
+}
+.chord-row-empty { height: 8px; }
+
+.chord-input {
+  position: absolute;
+  top: 0;
+  height: 18px;
+  background: transparent;
+  border: 1px solid transparent;
+  border-radius: 3px;
+  font: 600 12px ui-monospace, "Cascadia Mono", monospace;
+  color: var(--accent);
+  text-align: left;
+  padding: 0 4px;
+  font-family: ui-monospace, "Cascadia Mono", monospace;
+}
+.chord-input::placeholder { color: var(--line); font-weight: 400; }
+.chord-input:hover, .chord-input:focus {
+  border-color: var(--line);
+  background: #fff;
+  outline: none;
+}
+
+.chord-text {
+  position: absolute;
+  top: 2px;
+  font: 600 12px ui-monospace, "Cascadia Mono", monospace;
+  color: var(--accent);
+}
+
+@media print {
+  .chord-input { border-color: transparent !important; background: transparent !important; }
+  .chord-input::placeholder { color: transparent !important; }
+}
 
 .notes-section {
   margin-top: 32px;
