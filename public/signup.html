@@ -14,8 +14,8 @@
     <form id="signup-form" class="auth-form">
       <label>Email <input type="email" name="email" autocomplete="email" required autofocus /></label>
       <label>Username
-        <input type="text" name="username" pattern="[a-z0-9][a-z0-9_-]{1,30}" autocomplete="username" required />
-        <small class="hint">Used in shareable URLs (lowercase, 2–31 chars).</small>
+        <input type="text" name="username" pattern="[A-Za-z0-9][A-Za-z0-9_-]{1,30}" autocomplete="username" required />
+        <small class="hint">Used in shareable URLs. Letters, numbers, _ and - (2–31 chars). Will be lowercased.</small>
       </label>
       <label>Password
         <input type="password" name="password" autocomplete="new-password" minlength="8" required />
