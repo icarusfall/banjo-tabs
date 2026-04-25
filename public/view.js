@@ -5,7 +5,12 @@ const PAD_LEFT = 30;
 const PAD_TOP = 18;
 const PAD_BOTTOM = 8;
 const STRING_GAP = 18;
-const MIN_CELL_W = 22;
+const SCREEN_CELL_W = 22;
+const PRINT_CELL_W = 20;
+const PRINT_PAGE_PX = 718;
+let MIN_CELL_W = SCREEN_CELL_W;
+let printMode = false;
+let cachedTab = null;
 
 const els = {
   title: document.getElementById('view-title'),
@@ -158,11 +163,12 @@ function renderMeasure(m, tab, stringNames, isFirstInRow) {
 }
 
 function renderStaff(tab) {
+  cachedTab = tab;
   els.staff.innerHTML = '';
   const ticks = ticksPerMeasure(tab);
   const fullW = PAD_LEFT + ticks * MIN_CELL_W + 1;
   const slimW = ticks * MIN_CELL_W + 1;
-  const containerWidth = els.staff.clientWidth || 900;
+  const containerWidth = printMode ? PRINT_PAGE_PX : (els.staff.clientWidth || 900);
   let row = null;
   let rowWidth = 0;
   for (let m = 0; m < tab.measures.length; m++) {
@@ -231,5 +237,15 @@ function renderStaff(tab) {
 })();
 
 window.addEventListener('resize', () => {
-  // re-fetch wouldn't be ideal; just no-op for now
+  if (cachedTab) renderStaff(cachedTab);
+});
+window.addEventListener('beforeprint', () => {
+  printMode = true;
+  MIN_CELL_W = PRINT_CELL_W;
+  if (cachedTab) renderStaff(cachedTab);
+});
+window.addEventListener('afterprint', () => {
+  printMode = false;
+  MIN_CELL_W = SCREEN_CELL_W;
+  if (cachedTab) renderStaff(cachedTab);
 });

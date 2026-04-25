@@ -358,7 +358,11 @@ const PAD_LEFT = 30;
 const PAD_TOP = 18;
 const PAD_BOTTOM = 8;
 const STRING_GAP = 18;
-const MIN_CELL_W = 22;
+const SCREEN_CELL_W = 22;
+const PRINT_CELL_W = 20;
+const PRINT_PAGE_PX = 718; // ~190mm at 96dpi (A4 minus 10mm side margins)
+let MIN_CELL_W = SCREEN_CELL_W;
+let printMode = false;
 
 function ticksPerMeasure(tab) {
   return tab.timeSignature.num * tab.subdivision;
@@ -393,7 +397,7 @@ function renderStaff() {
 
   let row = null;
   let rowWidth = 0;
-  const containerWidth = els.staff.clientWidth || 900;
+  const containerWidth = printMode ? PRINT_PAGE_PX : (els.staff.clientWidth || 900);
 
   for (let m = 0; m < tab.measures.length; m++) {
     let isFirstInRow;
@@ -709,6 +713,17 @@ function removeMeasure(idx) {
 }
 
 window.addEventListener('resize', () => {
+  if (state.tab) renderStaff();
+});
+
+window.addEventListener('beforeprint', () => {
+  printMode = true;
+  MIN_CELL_W = PRINT_CELL_W;
+  if (state.tab) renderStaff();
+});
+window.addEventListener('afterprint', () => {
+  printMode = false;
+  MIN_CELL_W = SCREEN_CELL_W;
   if (state.tab) renderStaff();
 });
 
