@@ -337,35 +337,51 @@ function measureHeight() {
 
 // ---------- Render staff ----------
 function renderStaff() {
+  const scrollY = window.scrollY;
+  const scrollX = window.scrollX;
   els.staff.innerHTML = '';
-  if (!state.tab) return;
+  if (!state.tab) {
+    window.scrollTo(scrollX, scrollY);
+    return;
+  }
 
   const tab = state.tab;
   const ticks = ticksPerMeasure(tab);
   const cellW = MIN_CELL_W;
-  const w = measureWidth(tab);
   const h = measureHeight();
   const stringNames = tab.tuning;
+  const fullW = PAD_LEFT + ticks * cellW + 1;
+  const slimW = ticks * cellW + 1;
 
   let row = null;
   let rowWidth = 0;
   const containerWidth = els.staff.clientWidth || 900;
 
   for (let m = 0; m < tab.measures.length; m++) {
-    if (!row || rowWidth + w > containerWidth) {
+    let isFirstInRow;
+    let w;
+    if (row && rowWidth + slimW <= containerWidth) {
+      isFirstInRow = false;
+      w = slimW;
+    } else {
       row = document.createElement('div');
       row.className = 'measure-row';
       els.staff.appendChild(row);
       rowWidth = 0;
+      isFirstInRow = true;
+      w = fullW;
     }
     rowWidth += w;
-    row.appendChild(renderMeasure(m, tab, ticks, cellW, w, h, stringNames));
+    row.appendChild(renderMeasure(m, tab, ticks, cellW, w, h, stringNames, isFirstInRow));
   }
+
+  window.scrollTo(scrollX, scrollY);
 }
 
-function renderMeasure(m, tab, ticks, cellW, w, h, stringNames) {
+function renderMeasure(m, tab, ticks, cellW, w, h, stringNames, isFirstInRow) {
+  const padLeft = isFirstInRow ? PAD_LEFT : 0;
   const wrap = document.createElement('div');
-  wrap.className = 'measure';
+  wrap.className = 'measure' + (isFirstInRow ? ' measure-first' : '');
   wrap.dataset.measure = String(m);
 
   const label = document.createElement('div');
@@ -392,8 +408,8 @@ function renderMeasure(m, tab, ticks, cellW, w, h, stringNames) {
     input.type = 'text';
     input.className = 'chord-input';
     input.value = tab.measures[m].chords[b] || '';
-    input.placeholder = b === 0 ? 'chord' : '';
-    input.style.left = `${PAD_LEFT + b * beatWidth}px`;
+    input.placeholder = (m === 0 && b === 0) ? 'chord' : '';
+    input.style.left = `${padLeft + b * beatWidth}px`;
     input.style.width = `${beatWidth - 2}px`;
     input.addEventListener('input', () => {
       const v = input.value.trim();
@@ -426,27 +442,30 @@ function renderMeasure(m, tab, ticks, cellW, w, h, stringNames) {
 
   for (let s = 0; s < NUM_STRINGS; s++) {
     const y = PAD_TOP + s * STRING_GAP;
-    const lbl = document.createElementNS(svgNS, 'text');
-    lbl.setAttribute('class', 'string-label');
-    lbl.setAttribute('x', String(PAD_LEFT - 6));
-    lbl.setAttribute('y', String(y + 4));
-    lbl.textContent = stringNames[s] || '';
-    svg.appendChild(lbl);
+    if (isFirstInRow) {
+      const lbl = document.createElementNS(svgNS, 'text');
+      lbl.setAttribute('class', 'string-label');
+      lbl.setAttribute('x', String(padLeft - 6));
+      lbl.setAttribute('y', String(y + 4));
+      lbl.textContent = stringNames[s] || '';
+      svg.appendChild(lbl);
+    }
 
     const line = document.createElementNS(svgNS, 'line');
     line.setAttribute('class', 'string-line');
-    line.setAttribute('x1', String(PAD_LEFT));
+    line.setAttribute('x1', String(padLeft));
     line.setAttribute('y1', String(y));
-    line.setAttribute('x2', String(PAD_LEFT + ticks * cellW));
+    line.setAttribute('x2', String(padLeft + ticks * cellW));
     line.setAttribute('y2', String(y));
     svg.appendChild(line);
   }
 
   const subdiv = tab.subdivision;
   for (let t = 0; t <= ticks; t++) {
-    const x = PAD_LEFT + t * cellW;
+    const x = padLeft + t * cellW;
     const isStrong = t % subdiv === 0;
     const isBar = t === 0 || t === ticks;
+    if (t === 0 && !isFirstInRow) continue; // shared barline with previous measure
     const line = document.createElementNS(svgNS, 'line');
     line.setAttribute('class', isBar ? 'barline' : isStrong ? 'beat-strong' : 'beat-weak');
     line.setAttribute('x1', String(x));
@@ -467,7 +486,7 @@ function renderMeasure(m, tab, ticks, cellW, w, h, stringNames) {
 
   for (let s = 0; s < NUM_STRINGS; s++) {
     for (let t = 0; t < ticks; t++) {
-      const x = PAD_LEFT + t * cellW;
+      const x = padLeft + t * cellW;
       const y = PAD_TOP + s * STRING_GAP;
 
       const hit = document.createElementNS(svgNS, 'rect');

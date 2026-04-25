@@ -493,7 +493,7 @@ button {
 }
 
 /* Staff */
-.staff-area { display: flex; flex-direction: column; gap: 24px; }
+.staff-area { display: flex; flex-direction: column; gap: 18px; }
 
 .measure-row {
   display: flex;
@@ -527,12 +527,13 @@ button {
 .measure-label {
   position: absolute;
   top: -18px;
-  left: 30px;
+  left: 4px;
   font-size: 11px;
   color: var(--muted);
   text-transform: uppercase;
   letter-spacing: 0.5px;
 }
+.measure-first .measure-label { left: 30px; }
 
 .measure-label input {
   background: transparent;

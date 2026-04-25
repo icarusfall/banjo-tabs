@@ -35,14 +35,15 @@ async function renderNav() {
 
 function ticksPerMeasure(tab) { return tab.timeSignature.num * tab.subdivision; }
 
-function renderMeasure(m, tab, stringNames) {
+function renderMeasure(m, tab, stringNames, isFirstInRow) {
   const ticks = ticksPerMeasure(tab);
   const cellW = MIN_CELL_W;
-  const w = PAD_LEFT + ticks * cellW + 8;
+  const padLeft = isFirstInRow ? PAD_LEFT : 0;
+  const w = padLeft + ticks * cellW + 1;
   const h = PAD_TOP + (NUM_STRINGS - 1) * STRING_GAP + PAD_BOTTOM + 14;
 
   const wrap = document.createElement('div');
-  wrap.className = 'measure';
+  wrap.className = 'measure' + (isFirstInRow ? ' measure-first' : '');
 
   if (tab.measures[m].label) {
     const label = document.createElement('div');
@@ -62,7 +63,7 @@ function renderMeasure(m, tab, stringNames) {
       if (!chords[b]) continue;
       const span = document.createElement('span');
       span.className = 'chord-text';
-      span.style.left = `${PAD_LEFT + b * beatWidth}px`;
+      span.style.left = `${padLeft + b * beatWidth}px`;
       span.textContent = chords[b];
       chordRow.appendChild(span);
     }
@@ -82,27 +83,30 @@ function renderMeasure(m, tab, stringNames) {
 
   for (let s = 0; s < NUM_STRINGS; s++) {
     const y = PAD_TOP + s * STRING_GAP;
-    const lbl = document.createElementNS(svgNS, 'text');
-    lbl.setAttribute('class', 'string-label');
-    lbl.setAttribute('x', String(PAD_LEFT - 6));
-    lbl.setAttribute('y', String(y + 4));
-    lbl.textContent = stringNames[s] || '';
-    svg.appendChild(lbl);
+    if (isFirstInRow) {
+      const lbl = document.createElementNS(svgNS, 'text');
+      lbl.setAttribute('class', 'string-label');
+      lbl.setAttribute('x', String(padLeft - 6));
+      lbl.setAttribute('y', String(y + 4));
+      lbl.textContent = stringNames[s] || '';
+      svg.appendChild(lbl);
+    }
 
     const line = document.createElementNS(svgNS, 'line');
     line.setAttribute('class', 'string-line');
-    line.setAttribute('x1', String(PAD_LEFT));
+    line.setAttribute('x1', String(padLeft));
     line.setAttribute('y1', String(y));
-    line.setAttribute('x2', String(PAD_LEFT + ticks * cellW));
+    line.setAttribute('x2', String(padLeft + ticks * cellW));
     line.setAttribute('y2', String(y));
     svg.appendChild(line);
   }
 
   const subdiv = tab.subdivision;
   for (let t = 0; t <= ticks; t++) {
-    const x = PAD_LEFT + t * cellW;
+    const x = padLeft + t * cellW;
     const isStrong = t % subdiv === 0;
     const isBar = t === 0 || t === ticks;
+    if (t === 0 && !isFirstInRow) continue;
     const line = document.createElementNS(svgNS, 'line');
     line.setAttribute('class', isBar ? 'barline' : isStrong ? 'beat-strong' : 'beat-weak');
     line.setAttribute('x1', String(x));
@@ -125,7 +129,7 @@ function renderMeasure(m, tab, stringNames) {
     for (let t = 0; t < ticks; t++) {
       const fret = tab.measures[m].notes[`${s}-${t}`];
       if (fret === undefined) continue;
-      const x = PAD_LEFT + t * cellW;
+      const x = padLeft + t * cellW;
       const y = PAD_TOP + s * STRING_GAP;
       const cx = x + cellW / 2;
       const text = String(fret);
@@ -155,19 +159,28 @@ function renderMeasure(m, tab, stringNames) {
 
 function renderStaff(tab) {
   els.staff.innerHTML = '';
+  const ticks = ticksPerMeasure(tab);
+  const fullW = PAD_LEFT + ticks * MIN_CELL_W + 1;
+  const slimW = ticks * MIN_CELL_W + 1;
+  const containerWidth = els.staff.clientWidth || 900;
   let row = null;
   let rowWidth = 0;
-  const w = PAD_LEFT + ticksPerMeasure(tab) * MIN_CELL_W + 8;
-  const containerWidth = els.staff.clientWidth || 900;
   for (let m = 0; m < tab.measures.length; m++) {
-    if (!row || rowWidth + w > containerWidth) {
+    let isFirstInRow;
+    let w;
+    if (row && rowWidth + slimW <= containerWidth) {
+      isFirstInRow = false;
+      w = slimW;
+    } else {
       row = document.createElement('div');
       row.className = 'measure-row';
       els.staff.appendChild(row);
       rowWidth = 0;
+      isFirstInRow = true;
+      w = fullW;
     }
     rowWidth += w;
-    row.appendChild(renderMeasure(m, tab, tab.tuning));
+    row.appendChild(renderMeasure(m, tab, tab.tuning, isFirstInRow));
   }
 }
 
