@@ -129,17 +129,53 @@ async function newTab() {
 
 async function renameTab(slug, currentTitle) {
   const next = prompt('Rename tab:', currentTitle);
-  if (!next || next === currentTitle) return;
+  if (next === null) return;
+  const trimmed = next.trim();
+  if (!trimmed) return;
   const res = await api(`/api/tabs/${slug}/rename`, {
     method: 'POST',
     headers: { 'Content-Type': 'application/json' },
-    body: JSON.stringify({ title: next.trim() }),
+    body: JSON.stringify({ title: trimmed }),
   });
   const data = await res.json();
   await loadList();
   if (state.currentSlug === slug) {
     await loadTab(data.slug);
   }
+}
+
+function clientSlugify(s) {
+  return (s || '')
+    .toLowerCase()
+    .replace(/[^a-z0-9]+/g, '-')
+    .replace(/^-+|-+$/g, '')
+    .slice(0, 60);
+}
+
+let slugSyncTimer = null;
+function scheduleSlugSync() {
+  if (slugSyncTimer) clearTimeout(slugSyncTimer);
+  slugSyncTimer = setTimeout(syncSlug, 1500);
+}
+
+async function syncSlug() {
+  if (!state.tab || !state.currentSlug) return;
+  const desired = clientSlugify(state.tab.title);
+  if (!desired || desired === state.currentSlug) return;
+  if (state.dirty) await flushSave(true);
+  try {
+    const res = await fetch(`/api/tabs/${state.currentSlug}/rename`, {
+      method: 'POST',
+      headers: { 'Content-Type': 'application/json' },
+      body: JSON.stringify({ title: state.tab.title }),
+    });
+    if (!res.ok) return;
+    const data = await res.json();
+    state.currentSlug = data.slug;
+    history.replaceState({}, '', `/editor/${data.slug}`);
+    localStorage.setItem('banjo-tab:last', data.slug);
+    loadList();
+  } catch {}
 }
 
 async function deleteTab(slug, title) {
@@ -173,6 +209,7 @@ async function loadTab(slug) {
   renderList();
   history.replaceState({}, '', `/editor/${state.currentSlug}`);
   localStorage.setItem('banjo-tab:last', state.currentSlug);
+  scheduleSlugSync();
 }
 
 function setMetaFromTab(tab) {
@@ -250,6 +287,7 @@ els.title.addEventListener('input', () => {
   const h2 = els.printTitle.querySelector('h2');
   if (h2) h2.textContent = state.tab.title;
   markDirty();
+  scheduleSlugSync();
 });
 els.artist.addEventListener('input', () => {
   if (!state.tab) return;
