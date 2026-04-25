@@ -1,0 +1,27 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="UTF-8" />
+  <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+  <title>Banjo Tabs · Log in</title>
+  <link rel="stylesheet" href="/style.css" />
+</head>
+<body class="auth-page">
+  <main class="auth-card">
+    <h1>Banjo Tabs</h1>
+    <p class="muted">Log in to your account.</p>
+
+    <form id="login-form" class="auth-form">
+      <label>Email <input type="email" name="email" autocomplete="email" required autofocus /></label>
+      <label>Password <input type="password" name="password" autocomplete="current-password" required /></label>
+      <button type="submit" class="btn-primary">Log in</button>
+      <p id="error" class="error" hidden></p>
+    </form>
+
+    <p class="auth-alt">
+      No account yet? <a href="/signup">Create one</a> · <a href="/browse">Browse public tabs</a>
+    </p>
+  </main>
+  <script src="/auth.js" type="module"></script>
+</body>
+</html>
